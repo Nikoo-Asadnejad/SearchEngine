@@ -21,7 +21,7 @@ public class SearchableDocument
     //searching tags for the document , splited title , rank high
     public HashSet<string> Tags { get; set; } = []; 
     //reversed keyboard , dictation faults , normilized , rank high
-    public HashSet<string> TranslitrationTags { get; set; }
+    public HashSet<string> TranslitrationTags { get; set; } = [];
     public HashSet<string> Synonyms { get; set; } = [];
     public double RankScore { get; set; } = 1;
     public int ViewCount { get; set; } = 1;
@@ -52,4 +52,5 @@ public class SearchableDocument
     // For vector similarity search
     public float[] Embedding { get; set; } 
     public Dictionary<string, string> EntityMetadata { get; set; } = []; // e.g., {"location": "Paris"}
+    
 }
