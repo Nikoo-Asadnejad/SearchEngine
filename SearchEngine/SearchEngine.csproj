@@ -8,11 +8,11 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5"/>
+        <PackageReference Include="NEST" Version="7.17.5" />
     </ItemGroup>
 
     <ItemGroup>
       <Folder Include="Application\" />
-      <Folder Include="Infrastructure\" />
       <Folder Include="Presentation\" />
     </ItemGroup>
 
