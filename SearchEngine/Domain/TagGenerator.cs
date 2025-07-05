@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace SearchEngine.Domain;
 
-internal sealed class TagGenerator
+internal static class TagGenerator
 {
     private static readonly Dictionary<char, char> PersianToEnglishKeyboard = new()
     {
@@ -77,25 +77,24 @@ internal sealed class TagGenerator
 
         [' '] = ' ' 
     };
-    public HashSet<string> GenerateNormalizedTags(string input)
+    public static string GenerateNormalizedTag(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return [];
+        if (string.IsNullOrWhiteSpace(input)) return input;
 
         var normalized = NormalizeText(input);
-        var tokens = Tokenize(normalized);
 
-        return tokens;
+        return normalized;
     }
 
-    public HashSet<string> GenerateReversedKeyboardTags(string input)
+    public static string GenerateReversedKeyboardTag(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return [];
+        if (string.IsNullOrWhiteSpace(input)) return input;
 
         var reversed = new string(input.Select(c =>
             PersianToEnglishKeyboard.TryGetValue(c, out var mapped) ? mapped : c
         ).ToArray());
 
-        return Tokenize(reversed);
+        return reversed;
     }
     
     public static string ConvertToPersianKeyboard(string englishInput)
@@ -108,13 +107,13 @@ internal sealed class TagGenerator
         {
             result.Append(EnglishToPersianKeyboard.TryGetValue(c, out var mapped)
                 ? mapped
-                : c); // fallback to original if not mapped
+                : c); 
         }
 
         return result.ToString();
     }
 
-    public HashSet<string> GeneratePhoneticDictationVariants(string word)
+    public static HashSet<string> GeneratePhoneticDictationVariants(string word)
     {
         var results = new HashSet<string>();
         if (string.IsNullOrWhiteSpace(word)) return results;
@@ -148,16 +147,17 @@ internal sealed class TagGenerator
         return results;
     }
 
-    public HashSet<string> GenerateTransliterationTags(string input)
+    public static HashSet<string> GenerateTransliterationTags(string input)
     {
         if (string.IsNullOrWhiteSpace(input)) return [];
 
-        var reversed = GenerateReversedKeyboardTags(input);
-        var normalized = GenerateNormalizedTags(input);
-        return reversed.Union(normalized).ToHashSet();
+        var reversed = GenerateReversedKeyboardTag(input);
+        var persianReversed = ConvertToPersianKeyboard(input);
+        var normalized = GenerateNormalizedTag(input);
+        return [reversed ,normalized ,persianReversed];
     }
     
-    private string NormalizeText(string input)
+    private static string NormalizeText(string input)
     {
         input = input.ToLowerInvariant();
         input = input.Normalize(NormalizationForm.FormD);
@@ -177,7 +177,7 @@ internal sealed class TagGenerator
         return builder.ToString().Normalize(NormalizationForm.FormC);
     }
 
-    private HashSet<string> Tokenize(string text)
+    public static HashSet<string> Tokenize(string text)
     {
         return Regex.Split(text, @"[\s\-_,]+")
                     .Where(x => !string.IsNullOrWhiteSpace(x))
