@@ -115,11 +115,11 @@ internal static class TagGenerator
         return result.ToString();
     }
 
-    public static HashSet<string> GeneratePhoneticDictationVariants(string word)
+    public static HashSet<string> GeneratePhoneticDictationVariants(this string input)
     {
         var results = new HashSet<string>();
-        if (string.IsNullOrWhiteSpace(word)) return results;
-
+        if (string.IsNullOrWhiteSpace(input)) return results;
+        
         void GenerateVariants(char[] current, int index)
         {
             if (index >= current.Length)
@@ -145,8 +145,29 @@ internal static class TagGenerator
             }
         }
 
-        GenerateVariants(word.ToCharArray(), 0);
+        GenerateVariants(input.ToCharArray(), 0);
         return results;
+    }
+
+    public static HashSet<string> GetAllTranslitrasion(this string input)
+    {
+        var results = new HashSet<string>();
+        results.Add(input);
+        results.Add(input.Normalize());
+        results.Add(input.GenerateReversedKeyboardVariant());
+        results.Add(input.GeneratePersianReversedKeyboardVariant());
+        results.UnionWith(input.GeneratePhoneticDictationVariants());
+        return results;
+    }
+    public static HashSet<string> GetAllKeywordsTranslitration(this string input)
+    {
+        var tokens = input.Tokenize();
+        var keywords = tokens;
+        keywords.UnionWith(tokens.Select(t=> t.Normalize()));
+        keywords.UnionWith(tokens.Select(k => k.GenerateReversedKeyboardVariant()));
+        keywords.UnionWith(tokens.Select(t=> t.GeneratePersianReversedKeyboardVariant()));
+        keywords.UnionWith(tokens.SelectMany(t=> t.GeneratePhoneticDictationVariants()));
+        return keywords;    
     }
     
     public static string Normalize(this string phrase)

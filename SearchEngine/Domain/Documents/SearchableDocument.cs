@@ -18,7 +18,7 @@ public class SearchableDocument
     public HashSet<string> Subcategories { get; set; }= [];
     // every keyword in title and description
     public HashSet<string> Keywords { get; set; }= []; 
-    //searching tags for the document , splited title , rank high
+    //searching tags for the document , the whole phrase , rank high
     public HashSet<string> Tags { get; set; } = []; 
     //reversed keyboard , dictation faults , normilized , rank high
     public HashSet<string> TranslitrationTags { get; set; } = [];
