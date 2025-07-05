@@ -77,16 +77,18 @@ internal static class TagGenerator
 
         [' '] = ' ' 
     };
-    public static string GenerateNormalizedTag(string input)
+    
+    private static readonly HashSet<string> EnglishStopWords = new(StringComparer.OrdinalIgnoreCase)
     {
-        if (string.IsNullOrWhiteSpace(input)) return input;
+        "and","is" , "was" , "were" , "have been","has" , "have", "the", "a", "an", "of", "in", "to", "for", "on", "with", "at", "by", "from", "as", "is", "it", "this", "that"
+    };
 
-        var normalized = NormalizeText(input);
-
-        return normalized;
-    }
-
-    public static string GenerateReversedKeyboardTag(string input)
+    private static readonly HashSet<string> PersianStopWords = new()
+    {
+        "و", "یا", "تا", "که", "را", "به", "از", "در", "برای", "با", "بی", "می", "این", "آن", "است","هست","دارد","بود"
+    };
+    
+    public static string GenerateReversedKeyboardVariant(this string input)
     {
         if (string.IsNullOrWhiteSpace(input)) return input;
 
@@ -97,7 +99,7 @@ internal static class TagGenerator
         return reversed;
     }
     
-    public static string ConvertToPersianKeyboard(string englishInput)
+    public static string GeneratePersianReversedKeyboardVariant(this string englishInput)
     {
         if (string.IsNullOrWhiteSpace(englishInput)) return englishInput;
 
@@ -146,41 +148,51 @@ internal static class TagGenerator
         GenerateVariants(word.ToCharArray(), 0);
         return results;
     }
-
-    public static HashSet<string> GenerateTransliterationTags(string input)
-    {
-        if (string.IsNullOrWhiteSpace(input)) return [];
-
-        var reversed = GenerateReversedKeyboardTag(input);
-        var persianReversed = ConvertToPersianKeyboard(input);
-        var normalized = GenerateNormalizedTag(input);
-        return [reversed ,normalized ,persianReversed];
-    }
     
-    private static string NormalizeText(string input)
+    public static string Normalize(this string phrase)
     {
-        input = input.ToLowerInvariant();
-        input = input.Normalize(NormalizationForm.FormD);
-        var builder = new StringBuilder();
+        if (string.IsNullOrWhiteSpace(phrase))
+            return phrase;
 
-        foreach (char c in input)
+        // Step 1: Lowercase and Unicode normalization
+        phrase = phrase.ToLowerInvariant().Normalize(NormalizationForm.FormD);
+
+        var sb = new StringBuilder();
+
+        foreach (char c in phrase)
         {
-            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
-            if (unicodeCategory != UnicodeCategory.NonSpacingMark &&
-                !char.IsPunctuation(c) &&
-                !char.IsSymbol(c))
+            var category = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (category == UnicodeCategory.LowercaseLetter ||
+                category == UnicodeCategory.UppercaseLetter ||
+                category == UnicodeCategory.OtherLetter ||
+                category == UnicodeCategory.DecimalDigitNumber)
             {
-                builder.Append(c);
+                sb.Append(c);
+            }
+            else
+            {
+                sb.Append(' ');
             }
         }
 
-        return builder.ToString().Normalize(NormalizationForm.FormC);
+        var cleaned = sb.ToString().Normalize(NormalizationForm.FormC);
+
+        var tokens = cleaned
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        return string.Join(' ', tokens);
     }
 
-    public static HashSet<string> Tokenize(string text)
+    public static HashSet<string> Tokenize(this string text)
     {
+        text = text.Normalize();
+        
         return Regex.Split(text, @"[\s\-_,]+")
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Where(word =>!string.IsNullOrWhiteSpace(word) 
+                                  && !EnglishStopWords.Contains(word) 
+                                  && !PersianStopWords.Contains(word))
+
                     .Select(x => x.Trim())
                     .ToHashSet();
     }
