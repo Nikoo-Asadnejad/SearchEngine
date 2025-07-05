@@ -4,15 +4,15 @@ using System.Text.Json;
 
 namespace SearchEngine.Infrastructure;
 
-public sealed class HuggingFaceEmbeddingService
+public sealed class HuggingFaceEmbeddingService : IEmbeddingService
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
 
-    public HuggingFaceEmbeddingService(HttpClient httpClient, string apiKey)
+    public HuggingFaceEmbeddingService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
-        _httpClient = httpClient;
-        _apiKey = apiKey;
+        _httpClient = httpClientFactory.CreateClient();
+        _apiKey = configuration["HuggingApiKey"];
     }
 
     public async Task<float[]> GenerateEmbeddingAsync(string inputText)

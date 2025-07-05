@@ -23,7 +23,7 @@ builder.Services.AddSingleton<IElasticClient>(serviceProvider =>
 
     return new ElasticClient(connectionSettings);
 });
-
+builder.Services.AddScoped<IEmbeddingService, HuggingFaceEmbeddingService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
